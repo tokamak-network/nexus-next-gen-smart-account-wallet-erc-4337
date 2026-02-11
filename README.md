@@ -85,22 +85,52 @@ npm run dev
 
 Open http://localhost:3000
 
+## Environment variables (what/where/why)
+
+### Smart contract deployment (shell environment)
+Set these in your shell before running the deploy script:
+
+- `PRIVATE_KEY`: **Deployer EOA** private key used by Foundry to broadcast deployments.
+- `VERIFYING_SIGNER`: **Off‑chain signer** for the verifying paymaster. This address signs paymaster approvals (paymasterAndData). It is *not* your deployer; it is the key your gas‑sponsorship service will use.
+- `ENTRYPOINT`: ERC‑4337 **EntryPoint contract** address. Default for Base Sepolia v0.7 is:
+  `0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789`.
+
+Why this EntryPoint address? It is the official v0.7 EntryPoint deployed on Base Sepolia. If you deploy your own EntryPoint or use another chain, override this value.
+
+### Frontend runtime config (`frontend/.env.local`)
+Create `frontend/.env.local` with:
+
+- `NEXT_PUBLIC_RPC_URL`: **Read‑only JSON‑RPC** for chain data (balances, reads). Used by viem `publicClient`.
+- `NEXT_PUBLIC_BUNDLER_RPC_URL`: **Bundler RPC** endpoint for submitting UserOperations (ERC‑4337). This is required for `Send UserOp`.
+- `NEXT_PUBLIC_ENTRYPOINT`: EntryPoint address used by the frontend to build UserOps (same as above).
+
+**RPC vs Bundler:**
+- `NEXT_PUBLIC_RPC_URL` = normal JSON‑RPC (eth_call, eth_getBalance, etc.).
+- `NEXT_PUBLIC_BUNDLER_RPC_URL` = ERC‑4337 bundler endpoint (eth_sendUserOperation, etc.).
+
 ## How to use the app (feature-by-feature)
 
 ### A) Account deployment
 1. Connect wallet.
-2. Paste your deployed **Factory Address**.
-3. Enter a `salt` (any number).
+2. Paste your deployed **Factory Address** (address of `NexusAccountFactory`).
+3. Enter a `salt` (any number). The factory uses CREATE2 so the account address is deterministic.
 4. Click **Compute Address** to preview the account.
 5. Click **Deploy Account** to deploy via factory.
 
-### B) Execute a UserOperation
-1. Enter destination address, ETH value, and calldata.
-2. Click **Send UserOp**.
-3. The app uses Permissionless.js to submit a UserOperation to your bundler.
+### B) Execute a UserOperation (Send UserOp)
+**What it does:** creates a UserOperation that calls `NexusAccount.execute()` and submits it to the bundler.
+
+1. **Destination**  target contract to call.
+2. **Value (ETH)**  optional ETH to send.
+3. **Calldata**  encoded function call.
+4. Click **Send UserOp** (submitted to the bundler via `NEXT_PUBLIC_BUNDLER_RPC_URL`).
+
+UserOps are different from normal transactions: they are signed by the smart account owner and executed by EntryPoint after bundler validation.
 
 ### C) Session keys
-1. Add a session key address.
+**What it does:** lets the owner grant a temporary key limited by time, gas, and target contracts.
+
+1. Add a session key address (EOA that will be allowed to call `execute`).
 2. Set `validUntil` (unix timestamp; 0 means no expiry).
 3. Set `gasLimit` (0 means no limit).
 4. Optionally provide allowed target contracts.
@@ -108,10 +138,19 @@ Open http://localhost:3000
 6. Click **Remove Session Key** to revoke.
 
 ### D) Guardians
+**What it does:** guardians are trusted addresses that can help recover the account.
+
+- **Who can be a guardian?** Any EOA address you trust.
+- **Who can set guardians?** The **owner** only.
+- **How many?** Up to 3. Recovery requires **2of3**.
+
+Steps:
 1. Add guardian addresses (up to 3).
 2. Remove guardian addresses if needed (cannot go below recovery threshold).
 
 ### E) Recovery
+**What it does:** transfers account ownership after a timelock if 2 guardians approve.
+
 1. Enter a **New Owner** address.
 2. A guardian initiates recovery (creates `recoveryId`).
 3. Another guardian confirms the recovery.
