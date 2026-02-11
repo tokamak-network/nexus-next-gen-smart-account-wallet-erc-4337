@@ -1,68 +1,147 @@
 # Nexus: Next-Gen Smart Account Wallet (ERC-4337)
 
-Nexus is a production-grade Smart Contract Wallet built on the **ERC-4337** standard. It abstracts away the complexities of the Ethereum network, providing a Web2-like experience without compromising on self-custody.
+Nexus is an ERC-4337 smart account wallet with deterministic deployment, gas sponsorship via a verifying paymaster, session keys, and social recovery. The repo includes Solidity contracts (Foundry) and a Next.js frontend that submits UserOperations through a bundler.
 
-## 🚀 The Problem & The Solution
+## What this application can do
 
-### The Friction (EOA Limitations)
-* **Private Key Anxiety:** One lost seed phrase = permanent loss of funds.
-* **Gas Barriers:** New users must buy ETH on an exchange before they can even use a dApp.
-* **UX Bottlenecks:** Every single action (Approve, Swap, Mint) requires a separate signature and gas fee.
+- **Deterministic account deployment** via `NexusAccountFactory` (CREATE2)
+- **ERC-4337 user op validation** with owner signatures
+- **Verifying paymaster** for gas sponsorship (off‑chain signer model)
+- **Session keys** with validity window, gas limit, and target allowlist
+- **Social recovery** (2‑of‑3 guardians, 24h timelock)
+- **Frontend dashboard** to deploy accounts, send UserOps, manage session keys, guardians, and recovery
 
-### The Solution (Account Abstraction)
-Nexus transforms the user account into a **programmable smart contract**, enabling:
-* **Gasless Onboarding:** Use a **Paymaster** to sponsor gas fees for your users.
-* **Social Recovery:** Restore access via trusted "Guardians" instead of seed phrases.
-* **Atomic Batching:** Bundle multiple transactions (e.g., Approve + Swap) into a single click.
-* **Session Keys:** Grant temporary permissions for specific dApps (perfect for gaming).
+## Tech stack
 
-## 🛠 Tech Stack
-* **Smart Contracts:** Solidity, Foundry (Testing & Deployment)
-* **AA Infrastructure:** Pimlico (Bundler & Paymaster), Permissionless.js
-* **Frontend:** Next.js, Tailwind CSS, Viem
-* **Auth:** Web3Auth (Social Login to Smart Account)
+- **Smart contracts**: Solidity + Foundry
+- **AA tooling**: account‑abstraction v0.7, Permissionless.js 0.2.31
+- **Frontend**: Next.js 15, React 19, viem
 
-## 🏗 Architecture
-The wallet follows the official ERC-4337 flow:
-1. **UserOperation:** High-level intent signed by the user.
-2. **Bundler:** Validates and packages UserOps into a single entry-point transaction.
-3. **EntryPoint:** The singleton security gatekeeper that triggers the wallet's logic.
-4. **Paymaster:** Optionally sponsors gas or allows gas payment in ERC-20 tokens.
+## Repo structure
 
-## 📋 Features Implemented
-- [ ] ECDSA Validation Logic (Phase 1)
-- [ ] Gasless Transaction Sponsorship (Phase 2)
-- [ ] Social Recovery Module (Phase 3)
-- [ ] Session Keys & Permission Management (Phase 2)
-- [ ] Multi-call / Transaction Batching (Phase 4)
-- [ ] Web3Auth Integration (Phase 4)
-- [ ] Pimlico Bundler & Paymaster Integration (Phase 2)
+- `contracts/src/` — smart contracts
+- `contracts/test/` — Foundry tests
+- `script/` — deployment scripts
+- `frontend/` — Next.js app
 
-## 🚧 Development Status & Roadmap
+## Prerequisites
 
-### Phase 1: Core Smart Account (Current)
-- [ ] NexusAccount.sol - ERC-4337 compliant smart account
-- [ ] NexusAccountFactory.sol - CREATE2 factory with address pre-computation
-- [ ] EntryPoint integration
-- [ ] Foundry test suite
+- Node.js 20+
+- Foundry (forge)
+- A Base Sepolia wallet with test ETH
+- A bundler RPC (e.g., Pimlico)
 
-### Phase 2: Paymaster & Session Keys
-- [ ] VerifyingPaymaster.sol - Gas sponsorship with admin signatures
-- [ ] Session key management system
-- [ ] Paymaster deposit management
+## Quickstart
 
-### Phase 3: Social Recovery
-- [ ] Guardian management with multi-sig
-- [ ] 24-hour timelock recovery system
-- [ ] Recovery confirmation flow
+### 1) Install dependencies
 
-### Phase 4: Full-Stack Integration
-- [ ] Next.js frontend with Web3Auth
-- [ ] Permissionless.js SmartAccountClient integration
-- [ ] Transaction builder UI
-- [ ] Guardian management UI
+```bash
+# smart contracts
+forge install
 
-### Phase 5: Testing & Deployment
-- [ ] Comprehensive test coverage
-- [ ] Base Sepolia deployment
-- [ ] Documentation & user guides
+# frontend
+cd frontend
+npm install
+```
+
+### 2) Run tests
+
+```bash
+forge test
+```
+
+### 3) Deploy contracts (Base Sepolia)
+
+Set env vars:
+
+```bash
+export PRIVATE_KEY=...
+export VERIFYING_SIGNER=...
+export ENTRYPOINT=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
+```
+
+Run the deploy script:
+
+```bash
+forge script script/Deploy.s.sol --rpc-url base-sepolia --broadcast --verify -vvvv
+```
+
+### 4) Run the frontend
+
+Create `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_RPC_URL=https://sepolia.base.org
+NEXT_PUBLIC_ENTRYPOINT=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
+NEXT_PUBLIC_BUNDLER_RPC_URL=<your bundler URL>
+```
+
+Start the app:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open http://localhost:3000
+
+## How to use the app (feature-by-feature)
+
+### A) Account deployment
+1. Connect wallet.
+2. Paste your deployed **Factory Address**.
+3. Enter a `salt` (any number).
+4. Click **Compute Address** to preview the account.
+5. Click **Deploy Account** to deploy via factory.
+
+### B) Execute a UserOperation
+1. Enter destination address, ETH value, and calldata.
+2. Click **Send UserOp**.
+3. The app uses Permissionless.js to submit a UserOperation to your bundler.
+
+### C) Session keys
+1. Add a session key address.
+2. Set `validUntil` (unix timestamp; 0 means no expiry).
+3. Set `gasLimit` (0 means no limit).
+4. Optionally provide allowed target contracts.
+5. Click **Add Session Key**.
+6. Click **Remove Session Key** to revoke.
+
+### D) Guardians
+1. Add guardian addresses (up to 3).
+2. Remove guardian addresses if needed (cannot go below recovery threshold).
+
+### E) Recovery
+1. Enter a **New Owner** address.
+2. A guardian initiates recovery (creates `recoveryId`).
+3. Another guardian confirms the recovery.
+4. After 24 hours, execute recovery with the `recoveryId`.
+
+## Testing coverage
+
+All core features are covered by Foundry tests:
+
+- Account validation & execution
+- Session key validation & restrictions
+- Social recovery flow
+- Verifying paymaster signature validation
+
+Run:
+
+```bash
+forge test
+```
+
+## Notes / current limitations
+
+- **Web3Auth is stubbed** in the frontend (uses injected wallets like MetaMask).
+- The frontend uses **no paymaster** for UserOps by default (bundler only).
+- Upgrade Next.js if you want to address the CVE warning from `next@15.1.3`.
+
+## EntryPoint
+
+Base Sepolia v0.7 EntryPoint:
+
+```
+0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
+```
