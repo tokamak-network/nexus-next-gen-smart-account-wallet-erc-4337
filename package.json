@@ -1,0 +1,28 @@
+{
+  "name": "nexus-smart-account",
+  "version": "0.1.0",
+  "description": "Next-Gen Smart Account Wallet (ERC-4337)",
+  "main": "index.js",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "test:coverage": "forge coverage",
+    "deploy:local": "forge script script/Deploy.s.sol --fork-url http://localhost:8545 --broadcast",
+    "deploy:base-sepolia": "forge script script/Deploy.s.sol --rpc-url base-sepolia --broadcast --verify -vvvv",
+    "lint": "forge fmt",
+    "clean": "forge clean"
+  },
+  "keywords": [
+    "erc-4337",
+    "account-abstraction",
+    "smart-contract-wallet",
+    "ethereum",
+    "base"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "prettier-plugin-solidity": "^1.2.0"
+  }
+}

@@ -1,0 +1,17 @@
+# Foundry
+out/
+cache/
+cache_forge/
+broadcast/
+*.gas-snapshot
+
+# Node
+node_modules/
+
+# Environment/OS
+.env
+.env.*
+!.env.example
+.DS_Store
+
+.claude

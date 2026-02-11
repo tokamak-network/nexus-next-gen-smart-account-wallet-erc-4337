@@ -30,7 +30,39 @@ The wallet follows the official ERC-4337 flow:
 4. **Paymaster:** Optionally sponsors gas or allows gas payment in ERC-20 tokens.
 
 ## 📋 Features Implemented
-- [x] ECDSA Validation Logic
-- [x] Gasless Transaction Sponsorship
-- [x] Social Recovery Module
-- [x] Multi-call / Transaction Batching
+- [ ] ECDSA Validation Logic (Phase 1)
+- [ ] Gasless Transaction Sponsorship (Phase 2)
+- [ ] Social Recovery Module (Phase 3)
+- [ ] Session Keys & Permission Management (Phase 2)
+- [ ] Multi-call / Transaction Batching (Phase 4)
+- [ ] Web3Auth Integration (Phase 4)
+- [ ] Pimlico Bundler & Paymaster Integration (Phase 2)
+
+## 🚧 Development Status & Roadmap
+
+### Phase 1: Core Smart Account (Current)
+- [ ] NexusAccount.sol - ERC-4337 compliant smart account
+- [ ] NexusAccountFactory.sol - CREATE2 factory with address pre-computation
+- [ ] EntryPoint integration
+- [ ] Foundry test suite
+
+### Phase 2: Paymaster & Session Keys
+- [ ] VerifyingPaymaster.sol - Gas sponsorship with admin signatures
+- [ ] Session key management system
+- [ ] Paymaster deposit management
+
+### Phase 3: Social Recovery
+- [ ] Guardian management with multi-sig
+- [ ] 24-hour timelock recovery system
+- [ ] Recovery confirmation flow
+
+### Phase 4: Full-Stack Integration
+- [ ] Next.js frontend with Web3Auth
+- [ ] Permissionless.js SmartAccountClient integration
+- [ ] Transaction builder UI
+- [ ] Guardian management UI
+
+### Phase 5: Testing & Deployment
+- [ ] Comprehensive test coverage
+- [ ] Base Sepolia deployment
+- [ ] Documentation & user guides
